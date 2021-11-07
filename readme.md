@@ -1,4 +1,4 @@
-# Python Todo & Reminder App
+# Python Todo App
 
 ## Requirements
 

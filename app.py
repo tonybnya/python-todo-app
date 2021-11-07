@@ -8,11 +8,15 @@ Description : app.py - a todolist app with pop-up notifications.
 """
 
 import sys
+import colorama
+from colorama import Fore, Style
 from beepy import beep
 from pynotifier import Notification
 from task import Task
 
-MENU = "./usage.txt"
+colorama.init(autoreset=True)
+
+MENU = "./menu.txt"
 DB_FILE = "./todolist.txt"
 
 
@@ -36,10 +40,8 @@ def add(task):
 def list_tasks():
     """Function to list all the tasks registered"""
 
-    # Open the DB file in default read only mode('r')
-    with open(DB_FILE) as file_obj:
-        # Get the content of the file
-        content = file_obj.read()
+    # Call `open_file` function
+    content = open_file(DB_FILE)
 
     # Check if the file is empty
     if len(content) == 0:
@@ -48,26 +50,85 @@ def list_tasks():
 
     # Check if the file is not empty
     if len(content) > 0:
-        print(f"\n{content}\n")
+        print("========================================")
+        print("\t*** ALL TASKS ***")
+        print("========================================")
+        for line in content:
+            lst = line.strip().split("|")
+            print(f"\nTask: {lst[1]}\nid: {lst[0]}\ndone: {'No' if lst[2] == 'N' else 'Yes'}\ndate created: {lst[3]}")
+            print("----------------------------------------")
+
         popup("Tasks printed to the console.")
 
 
-def change():
-    """Function to change/modify a specific task"""
-
-    pass
-
-
-def delete():
+def delete_task(id_):
     """Function to delete a specific task"""
 
-    pass
+    # Call `open_file` function
+    content = open_file(DB_FILE)
+
+    with open(DB_FILE, "w") as file_obj:
+        for line in content:
+            if line.strip().split("|")[0] != id_:
+                file_obj.write(line)
 
 
-def done():
+def change(id_, new_task):
+    """Function to change/modify a specific task"""
+
+    # Call `open_file` function
+    data = open_file(DB_FILE)
+
+    for line in data:
+        # Condition to modify the line
+        if id_ != line.strip().split("|")[0]:
+            continue
+        else:
+            lst = line.strip().split("|")
+
+        # Create the new line with right data
+        new_line = f"{lst[0]}|{new_task}|{lst[2]}|{lst[3]}"
+        # Change this line in data
+        data[int(id_) - 1] = new_line + "\n"
+
+    # Open the DB file in write mode
+    with open(DB_FILE, "w") as file_obj:
+        # Overwrite the data
+        file_obj.writelines(data)
+
+
+def done(id_):
     """Function to set a task to done/completed"""
 
-    pass
+    # Call `open_file` function
+    data = open_file(DB_FILE)
+
+    for line in data:
+        if id_ != line.strip().split("|")[0]:
+            continue
+        else:
+            lst = line.strip().split("|")
+
+        # Create the new line with right data
+        new_line = f"{lst[0]}|{lst[1]}|{'Y'}|{lst[3]}"
+        # Change this line in data
+        data[int(id_) - 1] = new_line + "\n"
+
+    # Open the DB file in write mode
+    with open(DB_FILE, "w") as file_obj:
+        # Overwrite the data
+        file_obj.writelines(data)
+
+
+def open_file(filename):
+    """Function to open file"""
+
+    # Open the DB file in read mode
+    with open(DB_FILE) as file_obj:
+        # Read data line by line
+        data = file_obj.readlines()
+
+    return data
 
 
 def menu():
@@ -97,31 +158,55 @@ def popup(message):
 def main():
     """Main program"""
 
-    print(menu())
-    choice = input("Choose an option > ")
+    if len(sys.argv) != 2:
+        # Apply colorama module to print the menu with colored text
+        print(Style.BRIGHT + Fore.YELLOW + menu())
+        popup("Check the usage menu")
+        sys.exit(1)
 
-    if choice == "1":
+    args = ["add", "ls", "del", "ch", "done", "help"]
+    option = sys.argv[1]
+
+    if option == args[0]:
         item = input("Enter your task:\n> ")
         task = Task(item)
         add(str(task))
         print("Task added successfully!")
         popup(f"""task: {task.task}\ndone: {task.done}\ndate: {task.date}""")
 
-    elif choice == "2":
+    elif option == args[1]:
         list_tasks()
 
-    elif choice == "3":
-        pass
-    elif choice == "4":
-        pass
-    elif choice == "5":
-        pass
-    elif choice == "6":
-        print(menu())
+    elif option == args[2]:
+        id_ = input("Enter the ID of the task to delete > ")
+        delete_task(id_)
+
+        print("Task deleted!")
+        popup("Task deleted!")
+
+    elif option == args[3]:
+        id_ = input("Type the Task ID to change > ")
+        new_task = input("Type the new task >\n")
+        change(id_, new_task)
+
+        print("Change done!")
+        popup("Change done!")
+
+    elif option == args[4]:
+        id_ = input("Enter an ID to set its task to done > ")
+        done(id_)
+
+        print("Task set to done!")
+        popup("Task set to done!")
+
+    elif option == args[5]:
+        # Apply colorama module to print the menu with colored text
+        print(Style.BRIGHT + Fore.YELLOW + menu())
         popup("Help menu in the console.")
+
     else:
         popup("Bye!")
-        sys.exit("Unknown option")
+        sys.exit("Unknown option.")
 
 
 # Standard boilerplate statement to call the main function

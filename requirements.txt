@@ -1,2 +1,3 @@
 beepy==1.0.7
 py-notifier==0.3.2
+colorama==0.4.4
